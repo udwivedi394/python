@@ -1,0 +1,329 @@
+head	1.4;
+access;
+symbols;
+locks
+	root:1.4; strict;
+comment	@# @;
+
+
+1.4
+date	2017.11.19.16.03.16;	author root;	state Exp;
+branches;
+next	1.3;
+
+1.3
+date	2017.11.19.14.53.44;	author root;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2017.11.19.14.26.46;	author root;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2017.11.19.07.46.31;	author root;	state Exp;
+branches;
+next	;
+
+
+desc
+@This program is to find the longest common subsequence between two strings
+This project contains various approaches to retrieve the same result. 
+Recursvie, Dynammic Programming->(Memoization (Top to Bottom), Tabulization (Bottom to Top))
+@
+
+
+1.4
+log
+@findLCS_03 contains bug
+Not completed
+@
+text
+@import time
+
+delta = lambda x,y: x if x == y else ''
+maxofarr = lambda x,y: x if len(x) > len(y) else y
+
+#consider str1, str2 in the form of (aX, bY), where X and Y are last characters of strings, (a & b) are prefixes
+def findLCS(str1, str2):
+	if len(str1) == 0 or len(str2) == 0:
+		return ''
+
+	#check for (aX, b)
+	arr1 = findLCS(str1, str2[:-1])
+
+	#check for (a, bY)
+	arr2 = findLCS(str1[:-1], str2)
+
+	#check for (a, b), if x=y then add it existing string
+	arr3 = findLCS(str1[:-1], str2[:-1]) + delta(str1[-1], str2[-1])
+
+	return maxofarr(arr1, maxofarr(arr2, arr3))
+
+
+#Dynamic Programming, (Memoization top to bottom approach)
+def findLCS_02(str1, str2, edistDir = None):
+	
+	#If len of one of the string is zero, then no common substring, return blank
+	if len(str1) == 0 or len(str2) == 0:
+		return ''
+	
+	#Create a new directory if not present
+	if edistDir == None:
+		edistDir = {}
+
+	#If subsolution of (str1, str2) present in lookup table then return the value
+	if edistDir.get((str1, str2))!=None:
+		return edistDir.get((str1, str2))
+
+	#if last character of both string same then, call recursively for prefixes of str1, str2 and concatenate current character in it
+	if str1[-1] == str2[-1]:
+		return findLCS_02(str1[:-1], str2[:-1], edistDir) + str1[-1]
+
+	#lookup in (a, bY)
+	arr1 = findLCS_02(str1[:-1], str2, edistDir)
+	#lookup in (aX, b)
+	arr2 = findLCS_02(str1, str2[:-1], edistDir)
+
+	#Save result in lookup table
+	edistDir[(str1, str2)] = maxofarr(arr1, arr2)
+	return edistDir[(str1, str2)]
+
+#Dynamic Programming, Tabulation Method(Bottom to Top Approach)
+#Fill the m*n matrix and find the result, Needs work
+def findLCS_03(str1, str2):
+
+	#There is no need to fill the matrix in this case	
+	arr = [[0]*(len(str2)+1) for y in range(len(str1)+1)]
+
+	
+	lcs = ''
+	main_list = []
+	prev_j = -1
+		
+	for i in range(1, len(str1)+1):
+		for j in range(1, len(str2)+1):
+			#For the entire range of elements, we just need to check if the str1[i-1] == str2[j-1]
+			#The secondary condition is, if current matching j is greater than prev_j
+			#If yes, then append the current character to lcs, set prev_j = j
+			#If No, then append the current lcs to main_list, set prev_j = j and reinitialize lcs = ''+str2[j-1]
+			if str1[i-1] == str2[j-1]:
+				arr[i][j] = 1
+				if j > prev_j:
+					prev_j = j
+					lcs += str2[j-1]
+				elif j == prev_j:
+					pass
+				else:
+					prev_j = j
+					main_list.append(lcs)
+					lcs = str2[j-1]
+	
+	for i in range(len(str1)+1):
+		print arr[i]
+	
+#	print "lcs:", lcs
+#	print "main_list:", main_list
+	return lcs			#Returns the current LCS
+	
+	#This part  of program returns all the LCS of same length in form of list
+	final_list = [lcs]
+	for temp_str in main_list:
+		if len(temp_str) >= len(lcs):
+			final_list.append(temp_str)
+	return final_list
+	
+#Solution provided on GeeksforGeeks, it just returns the length of LCS
+def findLCS_04(X, Y):
+    # find the length of the strings
+    m = len(X)
+    n = len(Y)
+ 
+    # declaring the array for storing the dp values
+    L = [[None]*(n+1) for i in xrange(m+1)]
+ 
+    """Following steps build L[m+1][n+1] in bottom up fashion
+    Note: L[i][j] contains length of LCS of X[0..i-1]
+    and Y[0..j-1]"""
+    for i in range(m+1):
+        for j in range(n+1):
+            if i == 0 or j == 0 :
+                L[i][j] = 0
+            elif X[i-1] == Y[j-1]:
+                L[i][j] = L[i-1][j-1]+1
+            else:
+                L[i][j] = max(L[i-1][j] , L[i][j-1])
+ 
+    # L[m][n] contains the length of LCS of X[0..n-1] & Y[0..m-1]
+    return L[m][n]
+
+str1 = "AGGTAB"
+str2 = "GXTXAAYB"
+str3 = "GTAB"
+
+print "actual:", findLCS(str1, str2), "expected:", str3
+
+str1 = "ABCDGH"
+str2 = "AEDFHR"
+str3 = "ADH"
+
+print "actual:", findLCS(str1, str2), "expected:", str3
+
+str1 = "ABCDEFG"
+str2 = "BCDGK"
+str3 = "BCDG"
+
+print "actual:", findLCS(str1, str2), "expected:", str3
+
+str1 = "UTKARSH"
+str2 = "SHWETA"
+str3 = "SH"
+
+
+str1 = "XMJYAUZ"
+str2 = "MZJAWXU"
+str3 = "MJAU"
+
+t1 = time.time()
+print "actual:", findLCS(str1, str2), "expected:", str3
+t2 = time.time()
+print t2-t1
+
+t1 = time.time()
+print "actual:", findLCS_02(str1, str2), "expected:", str3
+t2 = time.time()
+print t2-t1
+
+str1 = "AGGTAAB"
+str2 = "GXTXAYB"
+str3 = "GTAB"
+
+t1 = time.time()
+print "actual:", findLCS_03(str1, str2), "expected:", str3
+t2 = time.time()
+print t2-t1
+
+str1 = "UTKARSH"
+str2 = "SHWETA"
+str3 = "SH"
+
+t1 = time.time()
+print "actual:", findLCS_03(str1, str2), "expected:", str3
+t2 = time.time()
+print t2-t1
+
+t1 = time.time()
+print "actual:", findLCS_04(str1, str2), "expected:", str3
+t2 = time.time()
+print t2-t1
+@
+
+
+1.3
+log
+@Optimized findLCS_03 and added findLCS_04 (Geeks4geeks solution)
+findLCS_03 doesnot requires the matrix to be filled and can generate all the LCS of same length
+@
+text
+@d52 1
+a52 1
+#Fill the m*n matrix and find the result
+d56 1
+a56 1
+	#arr = [[0]*(len(str2)+1) for y in range(len(str1)+1)]
+d70 1
+a70 1
+				#arr[i][j] = 1
+d74 2
+d81 2
+a82 2
+#	for i in range(len(str1)+1):
+#		print arr[i]
+d120 1
+a120 1
+str2 = "GXTXAYB"
+d156 1
+a156 1
+str1 = "AGGTAB"
+@
+
+
+1.2
+log
+@Implemented two new methods of LCS using dynammic programming
+findLCS_02 -> Memoization techniqure
+findLCS_03 -> Tabulation technique (Bottom to top), (Optimization required)
+@
+text
+@d51 6
+a57 1
+def findLCS_03(str1, str2):
+d59 1
+a59 3
+	arr = [[0 for x in range(len(str2)+1)] for y in range(len(str1)+1)]
+
+	lcs = []
+d65 4
+d70 1
+a70 1
+				arr[i][j] = 1
+d73 1
+a73 1
+					lcs.append(str2[j-1])
+d77 1
+a77 2
+					lcs = []
+					lcs.append(str2[j-1])
+d79 2
+a80 2
+	for i in range(len(str1)+1):
+		print arr[i]
+d82 3
+a84 3
+	print "lcs:", lcs
+	print "main_list:", main_list
+	return ''.join(lcs)
+d86 30
+d158 5
+d169 5
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 2
+d7 4
+a10 13
+def findLCS(str1, str2, arr = None):
+	if len(str1) == 0:
+		return ''.join(arr)
+
+	if len(str2) == 0:
+		return ''.join(arr)
+
+	if arr == None:
+		arr = []
+
+#	if str1[-1] == str2[-1]:
+#		arr.append(str1[-1])
+		#return arr
+d12 1
+a12 1
+	arr1 = findLCS(str1, str2[:-1], arr)
+d15 1
+a15 1
+	arr2 = findLCS(str1[:-1], str2, arr)
+d17 2
+a18 2
+	#check for (a, b)
+	arr3 = findLCS(str1[:-1], str2[:-1], arr) + delta(str1[-1], str2[-1])
+d22 96
+d120 1
+d122 8
+a129 1
+print findLCS(str1, str2)
+@
